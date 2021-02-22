@@ -1,7 +1,9 @@
 package com.daster.jbzd.ui.home;
 
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
@@ -60,7 +62,6 @@ public class HomeFragment extends Fragment {
                         //to avoid multiple calls for last item
                         Log.d("Last", "Last");
                         preLast = lastItem;
-                        //Toast.makeText(getActivity(),"Strona "+page, Toast.LENGTH_SHORT).show();
                         StartDataLoader(++page);
                     }
                 }
@@ -69,7 +70,9 @@ public class HomeFragment extends Fragment {
         memeList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
+                Intent i = new Intent(Intent.ACTION_VIEW);
+                i.setData(Uri.parse(memeRowAdapter.getLink(position)));
+                startActivity(i);
             }
         });
 
@@ -110,14 +113,23 @@ public class HomeFragment extends Fragment {
             swipeRefreshLayout.setRefreshing(false);
             if(result != null){
                 try {
+                    Log.e("JSON", result.toString());
                     for(int i=0; i<result.length(); i++){
-                        if(result.getJSONObject(i).getString("type")=="img")
-                            new DownloadImageTask(result.getJSONObject(i).getString("title")).execute(result.getJSONObject(i).getString("content"));
+                        String title = result.getJSONObject(i).getString("title");
+                        String link = result.getJSONObject(i).getString("link");
+                        String content = result.getJSONObject(i).getString("content");
+                        switch (result.getJSONObject(i).getString("type")){
+                            case "img":
+                                new DownloadImageTask(title, link).execute(content);
+                                break;
+                            case "video":
+                                memeRowAdapter.addVideo(title+"[video]", link, content);
+                                break;
+                        }
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                //Toast.makeText(getActivity(),"Dane Pobrane!", Toast.LENGTH_SHORT).show();
             }else{
                 Toast.makeText(getActivity(),"Błąd pobierania danych!", Toast.LENGTH_SHORT).show();
             }
@@ -133,6 +145,7 @@ public class HomeFragment extends Fragment {
                 for(Element article : articles){
                     JSONObject meme = new JSONObject();
                     meme.put("title", article.select(".article-title").select("a").text());
+                    meme.put("link", article.select(".article-title").select("a").attr("href"));
                     String img = article.select(".article-image").select("img").attr("src");
                     String video = article.select(".article-image").select("video").select("source").attr("src");
                     String type = img != "" ? "img" : video != "" ? "video" : "null";
@@ -159,8 +172,10 @@ public class HomeFragment extends Fragment {
     }
     private class DownloadImageTask extends AsyncTask<String, Void, Bitmap> {
         String title;
-        public DownloadImageTask(String title) {
+        String link;
+        public DownloadImageTask(String title, String link) {
             this.title = title;
+            this.link = link;
         }
         protected Bitmap doInBackground(String... urls) {
             String urldisplay = urls[0];
@@ -176,7 +191,7 @@ public class HomeFragment extends Fragment {
         }
 
         protected void onPostExecute(Bitmap result) {
-            memeRowAdapter.add(title, result);
+            memeRowAdapter.addImage(title, link, result);
         }
     }
 }
