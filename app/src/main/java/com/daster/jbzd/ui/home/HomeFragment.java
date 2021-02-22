@@ -9,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
+import android.widget.AdapterView;
 import android.widget.ListView;
 import android.widget.Toast;
 
@@ -63,6 +64,12 @@ public class HomeFragment extends Fragment {
                 }
             }
         });
+        memeList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+            }
+        });
 
         swipeRefreshLayout = root.findViewById(R.id.swiperefresh);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -92,7 +99,7 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    public class DataLoader extends AsyncTask<String, Integer, JSONArray> {
+    private class DataLoader extends AsyncTask<String, Integer, JSONArray> {
 
         String jbzd = "https://jbzd.com.pl/";
 
