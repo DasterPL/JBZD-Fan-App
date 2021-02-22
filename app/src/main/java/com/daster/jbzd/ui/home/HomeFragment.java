@@ -1,21 +1,27 @@
 package com.daster.jbzd.ui.home;
 
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
@@ -29,6 +35,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 
@@ -75,6 +83,39 @@ public class HomeFragment extends Fragment {
                 startActivity(i);
             }
         });
+        memeList.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
+            @Override
+            public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                if(isStoragePermissionGranted()){
+                    ImageView image = view.findViewById(R.id.imageView);
+                    BitmapDrawable draw = (BitmapDrawable)image.getDrawable();
+                    Bitmap bitmap = draw.getBitmap();
+
+                    FileOutputStream outStream = null;
+                    File sdCard = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+                    File dir = new File(sdCard.getAbsolutePath() + "/jbzd");
+                    dir.mkdirs();
+                    String fileName = String.format("%d.jpg", System.currentTimeMillis());
+                    File outFile = new File(dir, fileName);
+                    try {
+                        outStream = new FileOutputStream(outFile);
+                        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outStream);
+                        outStream.flush();
+                        outStream.close();
+                        Intent intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                        intent.setData(Uri.fromFile(outFile));
+                        getActivity().sendBroadcast(intent);
+                    } catch (Exception e) {
+                        Toast.makeText(getActivity(),"Błąd podczas zapisywania pliku!", Toast.LENGTH_SHORT).show();
+                        e.printStackTrace();
+                    }
+                    Toast.makeText(getActivity(),"Obrazek zapisany w pamięci urządzenia!", Toast.LENGTH_SHORT).show();
+                }else {
+                    Toast.makeText(getActivity(),"Brak uprawnień do zapisu plików!", Toast.LENGTH_SHORT).show();
+                }
+                return true;
+            }
+        });
 
         swipeRefreshLayout = root.findViewById(R.id.swiperefresh);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
@@ -86,6 +127,18 @@ public class HomeFragment extends Fragment {
         swipeRefreshLayout.setRefreshing(true);
         StartDataLoader();
         return root;
+    }
+    public Boolean isStoragePermissionGranted(){
+        if(getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
+            return true;
+        }else{
+            ActivityCompat.requestPermissions(getActivity(), new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+            if(getActivity().checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED){
+                return true;
+            }else{
+                return false;
+            }
+        }
     }
     public void StartDataLoader(){
         StartDataLoader(1);
