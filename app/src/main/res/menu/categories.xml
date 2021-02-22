@@ -3,5 +3,5 @@
 
     <item
         android:enabled="false"
-        android:title="Hard" />
+        android:title="Admin zostaw psa" />
 </menu>

@@ -34,6 +34,7 @@ public class HomeFragment extends Fragment {
     ListView memeList;
     SwipeRefreshLayout swipeRefreshLayout;
     MemeRowAdapter memeRowAdapter;
+    int page = 1;
 
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View root = inflater.inflate(R.layout.fragment_home, container, false);
@@ -51,7 +52,7 @@ public class HomeFragment extends Fragment {
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
                 final int lastItem = firstVisibleItem + visibleItemCount;
-                int page = 2;
+
                 if(lastItem == totalItemCount)
                 {
                     if(preLast!=lastItem)
@@ -59,6 +60,7 @@ public class HomeFragment extends Fragment {
                         //to avoid multiple calls for last item
                         Log.d("Last", "Last");
                         preLast = lastItem;
+                        //Toast.makeText(getActivity(),"Strona "+page, Toast.LENGTH_SHORT).show();
                         StartDataLoader(++page);
                     }
                 }
